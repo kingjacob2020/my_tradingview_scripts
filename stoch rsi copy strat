@@ -1,0 +1,24 @@
+//@version=4
+strategy(title="Stochastic RSI")
+smoothK = input(3, "K", minval=1)
+smoothD = input(3, "D", minval=1)
+lengthRSI = input(14, "RSI Length", minval=1)
+lengthStoch = input(14, "Stochastic Length", minval=1)
+src = input(close, title="RSI Source")
+rsi1 = rsi(src, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+plot(k, "K", color=#2962FF)
+plot(d, "D", color=#FF6D00)
+h0 = hline(80, "Upper Band", color=#FF6D00)
+h1 = hline(20, "Lower Band", color=#FF6D00)
+fill(h0, h1, color=color.rgb(33, 150, 243, 90), title="Background")
+
+longCondition = crossover(k, d)
+if (longCondition)
+    strategy.entry("BUY", strategy.long)
+
+shortCondition = crossunder(k, d)
+if (shortCondition)
+    strategy.entry("SELL", strategy.short)
+
