@@ -1,0 +1,29 @@
+//@version=2
+strategy(title="asd")
+
+///// Create inputs /////
+// Stochastics //
+periodK = input(14, title="K", minval=1)
+periodD = input(3, title="D", minval=1)
+smoothK = input(3, title="Smooth", minval=1)
+
+k = sma(stoch(close, high, low, periodK), smoothK)
+d = sma(k, periodD)
+
+// RSI Values //
+rsivalue = rsi(close, 14)
+
+
+///// Plot Stochastic Values and Lines /////
+plot(k, title="%K", color=lime)
+plot(d, title="%D", color=red)
+h0 = hline(80)
+h1 = hline(20)
+fill(h0, h1, color=purple, transp=80)
+
+
+///// Submit orders /////
+if (crossover(k, d))
+    strategy.entry(id="BUY", long=true)
+if (crossunder(k, d))
+    strategy.entry(id="SELL", long=false)
