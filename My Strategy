@@ -1,0 +1,24 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © kingjacob2020
+
+//@version=4
+strategy("My Strategy", overlay=true, margin_long=100, margin_short=100)
+
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ema(close, fastLength) - ema(close, slowlength)
+aMACD = ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+atrPeriod = input(10, "ATR Length")
+factor = input(3, "Factor")
+
+[_, direction] = supertrend(factor, atrPeriod)
+
+if (change(direction) < 0 and  crossover(delta, 0))
+    strategy.entry("BUY", strategy.long)
+
+if (change(direction) > 0 and crossunder(delta, 0))
+    strategy.entry("SELL", strategy.short)
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
