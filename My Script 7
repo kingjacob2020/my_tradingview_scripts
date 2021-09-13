@@ -1,0 +1,34 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © kingjacob2020
+
+//@version=4
+strategy("My Strategy", overlay=true, margin_long=100, margin_short=100)
+
+source = close
+length = input(20, minval=1)
+mult = input(2.0, minval=0.001, maxval=50)
+basis = sma(source, length)
+dev = mult * stdev(source, length)
+upper = basis + dev
+lower = basis - dev
+buyEntry = crossover(source, lower)
+sellEntry = crossunder(source, upper)
+
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ema(close, fastLength) - ema(close, slowlength)
+aMACD = ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+longCondition = crossover(delta, 0), crossover(source, lower)
+if (longCondition)
+    strategy.entry("BUY", strategy.long, stop=lower, oca_name="BollingerBands", oca_type=strategy.oca.cancel)
+else
+	strategy.cancel(id="BBandLE")
+
+shortCondition = crossunder(delta, 0)
+if (shortCondition)
+    strategy.entry("SELL", strategy.short)
+	
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
