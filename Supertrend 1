@@ -1,0 +1,14 @@
+//@version=4
+study("Supertrend", overlay=true, resolution="", resolution_gaps=true)
+
+atrPeriod = input(10, "ATR Length")
+factor = input(3, "Factor")
+
+[supertrend, direction] = supertrend(factor, atrPeriod)
+
+bodyMiddle = plot((open + close) / 2, display=display.none)
+upTrend = plot(direction < 0 ? supertrend : na, "Up Trend", color = color.green, style=plot.style_linebr)
+downTrend = plot(direction < 0? na : supertrend, "Down Trend", color = color.red, style=plot.style_linebr)
+
+alertcondition(upTrend, title="SuperTrend Buy", message="SuperTrend Buy!")
+alertcondition(downTrend, title="SuperTrend Sell", message="SuperTrend Sell!")
