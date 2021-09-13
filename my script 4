@@ -1,0 +1,32 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © kingjacob2020
+
+//@version=4
+strategy("My Strategy", overlay=true, margin_long=100, margin_short=100)
+
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ema(close, fastLength) - ema(close, slowlength)
+aMACD = ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+smoothK = input(3, "K", minval=1)
+smoothD = input(3, "D", minval=1)
+lengthRSI = input(14, "RSI Length", minval=1)
+lengthStoch = input(14, "Stochastic Length", minval=1)
+src = input(close, title="RSI Source")
+rsi1 = rsi(src, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+
+longCondition = crossover(delta, 0),  crossover(k, 30), crossover(k, 70) //change(direction) < 0, 
+if (longCondition)
+    strategy.entry("BUY", strategy.long)
+
+shortCondition = crossunder(delta, 0),  crossunder(k, 30),  crossunder(k, 70) //change(direction) > 0, 
+if (shortCondition)
+    strategy.entry("SELL", strategy.short)
+
+
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
