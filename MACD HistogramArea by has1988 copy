@@ -1,0 +1,18 @@
+//@version=2
+study(title="Moving Average Convergence/Divergence Histogram/Area", shorttitle="MACD Histo")
+source = close
+fastLength = input(12, minval=1), slowLength=input(26,minval=1)
+signalLength=input(9,minval=1)
+fastMA = ema(source, fastLength)
+slowMA = ema(source, slowLength)
+macd = fastMA - slowMA
+signal = ema(macd, signalLength)
+histo = macd - signal
+
+plotColor = if histo > 0
+    histo > histo[1] ? lime : green
+else 
+    histo < histo[1] ? maroon : red
+
+plot(histo, color=plotColor, style=area)
+
