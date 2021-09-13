@@ -1,0 +1,95 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Mango2Juice
+
+//@version=4
+study("Range Identifier", overlay=true)
+
+// Inputs
+i_maSource = input(close, "Source", input.source)
+i_maType   = input("WMA", "MA Type", input.string, options = ["EMA", "DEMA", "TEMA", "WMA", "VWMA", "SMA", "SMMA", "HMA", "LSMA", "Kijun", "McGinley"])
+i_maLen1   = input(3, "MA Fast Length", input.integer)
+i_maLen2   = input(24, "MA Slow Length", input.integer)
+i_atrLen1  = input(3, "ATR Period 1", input.integer)
+i_atrLen2  = input(24, "ATR Period 2", input.integer)
+i_treshold = input(false, "Custom Treshold ? Default is Auto.", input.bool)
+i_custom   = input(0.1, "Custom Treshold", input.float, minval = 0.001)
+i_showBG   = input(true,"Show Background Color?")
+
+// Moving Averages
+ma(type, src, len) =>
+    float result = 0
+    if type=="SMA" // Simple
+        result := sma(src, len)
+    if type=="EMA" // Exponential
+        result := ema(src, len)
+    if type=="DEMA" // Double Exponential
+        e = ema(src, len)
+        result := 2 * e - ema(e, len)
+    if type=="TEMA" // Triple Exponential
+        e = ema(src, len)
+        result := 3 * (e - ema(e, len)) + ema(ema(e, len), len)
+    if type=="WMA" // Weighted
+        result := wma(src, len)
+    if type=="VWMA" // Volume Weighted
+        result := vwma(src, len) 
+    if type=="SMMA" // Smoothed
+        w = wma(src, len)
+        result := na(w[1]) ? sma(src, len) : (w[1] * (len - 1) + src) / len
+    if type == "RMA"
+        result := rma(src, len)
+    if type=="HMA" // Hull
+        result := wma(2 * wma(src, len / 2) - wma(src, len), round(sqrt(len)))
+    if type=="LSMA" // Least Squares
+        result := linreg(src, len, 0)
+    if type=="Kijun" //Kijun-sen
+        kijun = avg(lowest(len), highest(len))
+        result :=kijun
+    if type=="McGinley"
+        mg = 0.0
+        mg := na(mg[1]) ? ema(src, len) : mg[1] + (src - mg[1]) / (len * pow(src/mg[1], 4))
+        result :=mg
+    result
+
+// Auto Set Treshold
+float treshold = na
+if timeframe.period == "M" or timeframe.period == "W"
+    treshold := 0.5
+else
+    if timeframe.period == "D"
+        treshold := 0.4
+    else
+        if timeframe.period == "240"
+            treshold := 0.14
+        else
+            if timeframe.period == "60"
+                treshold := 0.08
+            else
+                if timeframe.period == "30"
+                    treshold := 0.05
+                else
+                    if timeframe.period == "15"
+                        treshold := 0.04
+                    else
+                        if timeframe.period == "5"
+                            treshold := 0.02
+                        else
+                            if timeframe.period == "1"
+                                treshold := 0.01
+
+ma1   = 100 * (ma(i_maType, i_maSource, i_maLen1) - ma(i_maType, i_maSource, i_maLen2)) * atr(i_atrLen1) + 0.00001
+ma2   = ma1 / ma(i_maType, i_maSource, i_maLen2) / atr(i_atrLen2)
+range = (exp(2.0*ma2) - 1.0) / (exp(2.0 * ma2) + 1.0)
+
+if (range >= (i_treshold ? i_custom : treshold))
+    l = label.new(bar_index, high)
+	label.set_text(l, "buy@\n"+tostring(close))
+	label.set_color(l, color.green)
+	label.set_yloc(l, yloc.belowbar)
+	label.set_style(l, label.style_labelup)
+
+else
+	l = label.new(bar_index, high)
+	label.set_text(l, "short@\n"+tostring(close))
+	label.set_color(l, color.red)
+	label.set_yloc(l, yloc.abovebar)
+	label.set_style(l, label.style_labeldown)
