@@ -1,0 +1,50 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © kingjacob2020
+//@version=4
+study("My Study 1", overlay=true)
+
+//backtest range
+FromMonth = input(defval = 9, title = "From Month", minval = 1, maxval = 12)
+FromDay   = input(defval = 1, title = "From Day", minval = 1, maxval = 31)
+FromYear  = input(defval = 2018, title = "From Year", minval = 999)
+ToMonth   = input(defval = 1, title = "To Month", minval = 1, maxval = 12)
+ToDay     = input(defval = 1, title = "To Day", minval = 1, maxval = 31)
+ToYear    = input(defval = 9999, title = "To Year", minval = 999)
+start     = timestamp(FromYear, FromMonth, FromDay, 00, 00)  
+finish    = timestamp(ToYear, ToMonth, ToDay, 23, 59)       
+window()  => time >= start and time <= finish ? true : false
+
+//macd
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ema(close, fastLength) - ema(close, slowlength)
+aMACD = ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+//supertrend
+atrPeriod = input(10, "ATR Length")
+factor = input(3, "Factor")
+
+[_, direction] = supertrend(factor, atrPeriod)
+
+//stoch rsi
+smoothK = input(3, "K", minval=1)
+smoothD = input(3, "D", minval=1)
+lengthRSI = input(14, "RSI Length", minval=1)
+lengthStoch = input(14, "Stochastic Length", minval=1)
+src = input(close, title="RSI Source")
+rsi1 = rsi(src, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+
+//longCondition = change(direction) < 0, crossover(delta, 0), crossover(k, 40), crossover(k, 40)
+buy = (change(direction) < 0 and crossover(delta, 0) and (crossover(k, 40) or crossover(k, 40)))
+alertcondition(buy, title='Buy Signal', message='Buy Signal Alert')
+
+//shortCondition = change(direction) > 0, crossunder(delta, 0), crossunder(k ,40), crossunder(k, 60)
+sell = (change(direction) > 0 and crossunder(delta, 0) and (crossunder(k ,40) or crossunder(k, 60)))
+alertcondition(sell, title='Sell Signal', message='Sell Signal Alert')
+
+plotshape(buy, style=shape.labelup, location=location.belowbar, color=color.blue, size=size.tiny, title="buy label", text="BUY", textcolor=color.white)
+plotshape(sell, style=shape.labeldown, location=location.abovebar, color=color.red, size=size.tiny, title="sell label", text="SELL", textcolor=color.white)
