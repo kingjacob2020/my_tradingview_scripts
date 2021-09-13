@@ -1,0 +1,69 @@
+//@version=4
+study(title="popopo", overlay=true)
+
+// Inputs
+i_maSource = input(close, "Source", input.source)
+i_maType   = input("WMA", "MA Type", input.string, options = ["TEMA", "WMA"])
+i_maLen1   = input(3, "MA Fast Length", input.integer)
+i_maLen2   = input(24, "MA Slow Length", input.integer)
+i_atrLen1  = input(3, "ATR Period 1", input.integer)
+i_atrLen2  = input(24, "ATR Period 2", input.integer)
+i_treshold = input(false, "Custom Treshold ? Default is Auto.", input.bool)
+i_custom   = input(0.1, "Custom Treshold", input.float, minval = 0.001)
+i_showBG   = input(true,"Show Background Color?")
+
+// Moving Averages
+ma(type, src, len) =>
+    float result = 0
+    if type=="TEMA" // Triple Exponential
+        e = ema(src, len)
+        result := 3 * (e - ema(e, len)) + ema(ema(e, len), len)
+    if type=="WMA" // Weighted
+        result := wma(src, len)
+    result
+
+// Auto Set Treshold
+float treshold = na
+if timeframe.period == "M" or timeframe.period == "W"
+    treshold := 0.5
+else
+    if timeframe.period == "240"
+        treshold := 0.14
+    else
+        if timeframe.period == "60"
+            treshold := 0.08
+        else
+            if timeframe.period == "1"
+                treshold := 0.01
+
+ma1   = 100 * (ma(i_maType, i_maSource, i_maLen1) - ma(i_maType, i_maSource, i_maLen2)) * atr(i_atrLen1) + 0.00001
+ma2   = ma1 / ma(i_maType, i_maSource, i_maLen2) / atr(i_atrLen2)
+range = (exp(2.0*ma2) - 1.0) / (exp(2.0 * ma2) + 1.0)
+
+// Plots
+c_range      = range >= (i_treshold ? i_custom : treshold) ? color.lime : range <= -(i_treshold ? i_custom : treshold) ? color.red : color.gray
+
+plot(range, "Range", c_range, 4, plot.style_line)
+
+buy = range >= (i_treshold ? i_custom : treshold)
+sell = range <= -(i_treshold ? i_custom : treshold)
+
+drawlong = buy and sell[1]
+drawshort = sell and buy[1]
+
+alertcondition(drawlong, title='Buy Signal', message='Buy Signal Alert')
+alertcondition(drawshort, title='Sell Signal', message='Sell Signal Alert')
+
+if (drawlong)
+    l = label.new(bar_index, high)
+	label.set_text(l, "buy@\n"+tostring(close))
+	label.set_color(l, color.green)
+	label.set_yloc(l, yloc.belowbar)
+	label.set_style(l, label.style_labelup)
+
+if (drawshort)
+	l = label.new(bar_index, high)
+	label.set_text(l, "short@\n"+tostring(close))
+	label.set_color(l, color.red)
+	label.set_yloc(l, yloc.abovebar)
+	label.set_style(l, label.style_labeldown)
