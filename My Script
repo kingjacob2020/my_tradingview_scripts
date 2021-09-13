@@ -1,0 +1,24 @@
+//@version=4
+
+strategy("my strat", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=15)
+
+atrPeriod = input(5, "ATR Length")
+factor = input(1, "Factor")
+
+[_, direction] = supertrend(factor, atrPeriod)
+
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ema(close, fastLength) - ema(close, slowlength)
+aMACD = ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+if (crossover(delta, 0) and (direction) < 0)
+    strategy.entry("BUY", strategy.long)
+
+if (crossunder(delta, 0) and (direction) > 0)
+    strategy.entry("SELL", strategy.short)
+
+
+
