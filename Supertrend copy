@@ -1,0 +1,15 @@
+//@version=4
+strategy("Supertrend", overlay=true)
+
+atrPeriod = input(10, "ATR Length")
+factor = input(3, "Factor")
+
+[supertrend, direction] = supertrend(factor, atrPeriod)
+
+if change(direction) < 0
+    strategy.entry("My Long Entry Id", strategy.long)
+
+if change(direction) > 0
+    strategy.entry("My Short Entry Id", strategy.short)
+    
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
