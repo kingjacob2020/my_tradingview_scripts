@@ -1,0 +1,48 @@
+//@version=4
+strategy(title="Stochastic RSI", shorttitle="Stoch RSI", precision=2)
+
+smoothK = input(3, minval=1)
+smoothD = input(3, minval=1)
+lengthRSI = input(14, minval=1)
+lengthStoch = input(14, minval=1)
+src = input(close, title="RSI Source")
+
+rsi1 = rsi(src, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+
+// Compare current value and previous value to see if it goes up or down. If equals, take previous sign value.
+donSign(s) =>
+    isUp = s > s[1]
+    isDown = s < s[1]
+    ud = 0
+    ud := isUp ? 1 : ( isDown ? 0 : (nz(ud[1])) )
+    ud    
+
+signK = donSign(k)    
+colorK = signK > 0 ? #4caf50 : #b71c1c
+colorD = #ab47bc
+
+showD = input(false, "Show D line?")
+plot(showD ? d : na, color=colorD, linewidth=1, title="D", transp=0)
+
+plot(k, color=colorK, linewidth=2, title="K", transp=0)
+plot(k, color=colorK, linewidth=2, title="K", transp=0, style=plot.style_circles)
+
+h0 = hline(80)
+h1 = hline(20)
+fill(h0, h1, color=#f06292, transp=80)
+
+// bgcolor(color.gray, transp=88)
+
+// Draw predicted value
+nextvalue(src, src1) => barstate.islast ? (src + (src - src1)) : na
+nextsrc = nextvalue(k, k[1])
+nextsrcma = nextvalue(d, d[1])
+plot(nextsrc, style=plot.style_cross, linewidth=3, offset=1, color=colorK, title="Next K")
+plot(showD ? nextsrcma : na, style=plot.style_cross, linewidth=3, offset=1, color=colorD, title="Next D")
+
+if (crossover(k, d) and k<40)
+    strategy.entry(id="BUY", long=true)
+if (crossunder(k, d) and k>60)
+    strategy.entry(id="SELL", long=false)
