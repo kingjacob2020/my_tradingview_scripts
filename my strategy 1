@@ -1,0 +1,35 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © kingjacob2020
+//@version=4
+strategy("My Strategy", overlay=true, margin_long=100, margin_short=100)
+
+FromMonth = input(defval = 9, title = "From Month", minval = 1, maxval = 12)
+FromDay   = input(defval = 1, title = "From Day", minval = 1, maxval = 31)
+FromYear  = input(defval = 2018, title = "From Year", minval = 999)
+ToMonth   = input(defval = 1, title = "To Month", minval = 1, maxval = 12)
+ToDay     = input(defval = 1, title = "To Day", minval = 1, maxval = 31)
+ToYear    = input(defval = 9999, title = "To Year", minval = 999)
+start     = timestamp(FromYear, FromMonth, FromDay, 00, 00)  
+finish    = timestamp(ToYear, ToMonth, ToDay, 23, 59)       
+window()  => time >= start and time <= finish ? true : false
+
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ema(close, fastLength) - ema(close, slowlength)
+aMACD = ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+atrPeriod = input(10, "ATR Length")
+factor = input(3, "Factor")
+
+[_, direction] = supertrend(factor, atrPeriod)
+
+longCondition = change(direction) < 0, crossover(delta, 0)
+if (longCondition)
+    strategy.entry("My Long Entry Id", strategy.long)
+
+shortCondition = change(direction) > 0, crossunder(delta, 0)
+if (shortCondition)
+    strategy.entry("My Short Entry Id", strategy.short)
+//plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)
